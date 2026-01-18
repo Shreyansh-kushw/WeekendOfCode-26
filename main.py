@@ -1,6 +1,6 @@
 from collections import deque
 from tkinter import *
-from pyautogui import confirm, alert
+from pyautogui import alert
 import os
 
 class GUI:
@@ -78,11 +78,23 @@ class GameState:
             (2,1) : " ",
             (2,2) : " ",
         }
+        self.ui = GUI()
+
+        self.button_position = {
+            (0,0) : self.ui.btn00,
+            (0,1) : self.ui.btn01,
+            (0,2) : self.ui.btn02,
+            (1,0) : self.ui.btn10,
+            (1,1) : self.ui.btn11,
+            (1,2) : self.ui.btn12,
+            (2,0) : self.ui.btn20,
+            (2,1) : self.ui.btn21,
+            (2,2) : self.ui.btn22,
+        }
 
         self.Player_X = "X"
         self.Player_O = "O"
         
-        self.ui = GUI()
         self.update_board()
         
         self.Player_X_queue = deque()
@@ -92,22 +104,34 @@ class GameState:
         self.current_player = "X" 
 
     def update_board(self):
-
-        self.ui.btn00.config(text=self.board[(0,0)], command= lambda: self.play((0,0)))
-        self.ui.btn01.config(text=self.board[(0,1)], command= lambda: self.play((0,1)))
-        self.ui.btn02.config(text=self.board[(0,2)], command= lambda: self.play((0,2)))
-        self.ui.btn10.config(text=self.board[(1,0)], command= lambda: self.play((1,0)))
-        self.ui.btn11.config(text=self.board[(1,1)], command= lambda: self.play((1,1)))
-        self.ui.btn12.config(text=self.board[(1,2)], command= lambda: self.play((1,2)))
-        self.ui.btn20.config(text=self.board[(2,0)], command= lambda: self.play((2,0)))
-        self.ui.btn21.config(text=self.board[(2,1)], command= lambda: self.play((2,1)))
-        self.ui.btn22.config(text=self.board[(2,2)], command= lambda: self.play((2,2)))
-        
+        print("updating")
+        self.ui.btn00.config(text=self.board[(0,0)], command= lambda: self.button_handler((0,0), self.button_position[(0,0)]))
+        self.ui.btn01.config(text=self.board[(0,1)], command= lambda: self.button_handler((0,1), self.button_position[(0,1)]))
+        self.ui.btn02.config(text=self.board[(0,2)], command= lambda: self.button_handler((0,2), self.button_position[(0,2)]))
+        self.ui.btn10.config(text=self.board[(1,0)], command= lambda: self.button_handler((1,0), self.button_position[(1,0)]))
+        self.ui.btn11.config(text=self.board[(1,1)], command= lambda: self.button_handler((1,1), self.button_position[(1,1)]))
+        self.ui.btn12.config(text=self.board[(1,2)], command= lambda: self.button_handler((1,2), self.button_position[(1,2)]))
+        self.ui.btn20.config(text=self.board[(2,0)], command= lambda: self.button_handler((2,0), self.button_position[(2,0)]))
+        self.ui.btn21.config(text=self.board[(2,1)], command= lambda: self.button_handler((2,1), self.button_position[(2,1)]))
+        self.ui.btn22.config(text=self.board[(2,2)], command= lambda: self.button_handler((2,2), self.button_position[(2,2)]))
+    
+    def button_handler(self, position:tuple[int], button):
+        self.play(position)
+        button.config(state = "disabled")
+        self.update_board()
+        self.game_state_check()
 
     def play(self, position:tuple[int]):
-        print(self.current_player)
+
         if self.current_player == "X":
-            self.Player_X_queue.append(position)
+            if len(self.Player_X_queue) < 3:
+                self.Player_X_queue.append(position)
+
+            else:
+                removed = self.Player_X_queue.popleft()
+                self.board[removed] = " "
+                self.button_position[removed].config(state="active")
+                self.Player_X_queue.append(position)
             
             if self.board[position] == " ":
                 self.board[position] = self.current_player
@@ -116,17 +140,24 @@ class GameState:
             
             self.current_player = "O"
             self.update_board()
-            self.game_state_check()
+            
         else:
-            self.Player_O_queue.append(position)
+            if len(self.Player_O_queue) < 3:
+                self.Player_O_queue.append(position)
+
+            else:
+                removed = self.Player_O_queue.popleft()
+                self.board[removed] = " "
+                self.button_position[removed].config(state="active")
+                self.Player_O_queue.append(position)
             
             if self.board[position] == " ":
                 self.board[position] = self.current_player
             else:
-                pass   
+                pass
+            
             self.current_player = "X"
             self.update_board()
-            self.game_state_check()
 
     def game_state_check(self):
 
@@ -142,6 +173,7 @@ class GameState:
             self.game_over("tie")
 
     def game_over(self, winner:str):
+        self.update_board()
         if not winner == "tie":
             alert(text=f"Game Over! {winner} wins!", title="Game Over", button="OK")
         
