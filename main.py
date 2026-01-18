@@ -2,6 +2,7 @@ from collections import deque
 from tkinter import *
 from pyautogui import alert
 import os
+import random
 
 class GUI:
 
@@ -104,7 +105,7 @@ class GameState:
         self.current_player = "X" 
 
     def update_board(self):
-        print("updating")
+        # print("updating")
         self.ui.btn00.config(text=self.board[(0,0)], command= lambda: self.button_handler((0,0), self.button_position[(0,0)]))
         self.ui.btn01.config(text=self.board[(0,1)], command= lambda: self.button_handler((0,1), self.button_position[(0,1)]))
         self.ui.btn02.config(text=self.board[(0,2)], command= lambda: self.button_handler((0,2), self.button_position[(0,2)]))
@@ -140,6 +141,7 @@ class GameState:
             
             self.current_player = "O"
             self.update_board()
+            self.computer_turn()
             
         else:
             if len(self.Player_O_queue) < 3:
@@ -158,6 +160,26 @@ class GameState:
             
             self.current_player = "X"
             self.update_board()
+
+    def check_availability(self, keys:list[tuple[int]]):
+        new_list = []
+        # print("keys-",keys)
+        for key in keys:
+            # print(key)
+            if self.board[key] != " ":
+                pass
+            else:
+                new_list.append(key)  
+        
+        return new_list
+
+    def computer_turn(self):
+        # print(list(self.board.keys()))
+        possibilites = list(map(self.check_availability, [list(self.board.keys())]))[0]
+        computer_move = random.choice(possibilites)
+        # print(computer_move)
+        self.update_board()
+        self.button_handler(computer_move, self.button_position[computer_move])
 
     def game_state_check(self):
 
