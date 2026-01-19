@@ -12,47 +12,47 @@ class GUI:
         
         self.root = Tk()
         self.root.title("Vanishing Tic-Tac-Toe")
-        self.root.geometry("461x647")
+        self.root.geometry("428x550")
         self.root.resizable(False, False)
 
         self.square_frame = Frame(self.root, width=100, height=100)
         self.square_frame.grid(column=0, row=0)
 
         # Creating a button inside this frame
-        self.btn00 = Button(self.square_frame, text ="", bg = "white")
-        self.btn00.config(height = 10, width = 18)
+        self.btn00 = Button(self.square_frame, text ="", bg = "white", font=("Arial", 36))
+        self.btn00.config(height = 2, width = 4)
         self.btn00.grid(column = 0, row = 0)
 
-        self.btn01 = Button(self.square_frame, text ="", bg = "white")
-        self.btn01.config(height = 10, width = 18)
+        self.btn01 = Button(self.square_frame, text ="", bg = "white", font=("Arial", 36))
+        self.btn01.config(height = 2, width = 4)
         self.btn01.grid(column = 15, row = 0)
 
-        self.btn02 = Button(self.square_frame, text ="", bg = "white")
-        self.btn02.config(height = 10, width = 18)
+        self.btn02 = Button(self.square_frame, text ="", bg = "white", font=("Arial", 36))
+        self.btn02.config(height = 2, width = 4)
         self.btn02.grid(column = 30, row = 0)
 
-        self.btn10 = Button(self.square_frame, text ="", bg = "white")
-        self.btn10.config(height = 10, width = 18)
+        self.btn10 = Button(self.square_frame, text ="", bg = "white", font=("Arial", 36))
+        self.btn10.config(height = 2, width = 4)
         self.btn10.grid(column = 0, row = 10)
 
-        self.btn11 = Button(self.square_frame, text ="", bg = "white")
-        self.btn11.config(height = 10, width = 18)
+        self.btn11 = Button(self.square_frame, text ="", bg = "white", font=("Arial", 36))
+        self.btn11.config(height = 2, width = 4)
         self.btn11.grid(column = 15, row = 10)
 
-        self.btn12 = Button(self.square_frame, text ="", bg = "white")
-        self.btn12.config(height = 10, width = 18)
+        self.btn12 = Button(self.square_frame, text ="", bg = "white", font=("Arial", 36))
+        self.btn12.config(height = 2, width = 4)
         self.btn12.grid(column = 30, row = 10)
 
-        self.btn20 = Button(self.square_frame, text ="", bg = "white")
-        self.btn20.config(height = 10, width = 18)
+        self.btn20 = Button(self.square_frame, text ="", bg = "white", font=("Arial", 36))
+        self.btn20.config(height = 2, width = 4)
         self.btn20.grid(column = 0, row = 20)
 
-        self.btn21 = Button(self.square_frame, text ="", bg = "white")
-        self.btn21.config(height = 10, width = 18)
+        self.btn21 = Button(self.square_frame, text ="", bg = "white", font=("Arial", 36))
+        self.btn21.config(height = 2, width = 4)
         self.btn21.grid(column = 15, row = 20)
 
-        self.btn22 = Button(self.square_frame, text ="", bg = "white")
-        self.btn22.config(height = 10, width = 18)
+        self.btn22 = Button(self.square_frame, text ="", bg = "white", font=("Arial", 36))
+        self.btn22.config(height = 2, width = 4)
         self.btn22.grid(column = 30, row = 20)
         
 
@@ -134,7 +134,7 @@ class Game:
         self.play(position) # making the play
         button.config(state = "disabled") # disabling the buttons that were pressed
         self.update_board() # updating the boards
-        self.game_state_check() # checking whether the game has ended or not
+        self.game_state_check(self.board) # checking whether the game has ended or not
 
     def play(self, position:tuple[int]) -> None:
         """Function responsible for handling the plays made by the players."""
@@ -158,7 +158,6 @@ class Game:
                 pass
             
             self.current_player = "O" # switching the current player
-            self.update_board() # updating the board
             self.computer_turn() # initiating the computer's turn
             
         else: # if the Player_O has made the move
@@ -180,7 +179,6 @@ class Game:
                 pass
             
             self.current_player = "X" # changing the current player
-            self.update_board() # updating the board
 
     def check_availability(self, keys:list[tuple[int]]) -> list:
         """Returns the list of all the unoccupied positions on the board."""
@@ -201,7 +199,7 @@ class Game:
         self.ui.root.attributes('-disabled', True) # disabling the interactions with the tkinter window till the computer decides its move
 
         # hardcoding standard scenerios to improve the time.
-        if self.board[(1,1)] == " ": # When the human plays anywhere other than the center as his first move
+        if self.board[(1,1)] == " " and list(self.board.values()).count(" ") == 8: # When the human plays anywhere other than the center as his first move
             self.button_handler((1,1), self.button_position[(1,1)]) # play at the center
             self.ui.root.attributes('-disabled', False) # re-enabling the tkinter window after the computer has played its turn
             return
@@ -232,13 +230,13 @@ class Game:
             self.button_handler(best_move, self.button_position[best_move]) # executing the best move.
         
         else: # if the board has no empty boxes.
-            self.game_state_check() # check the state of the game
+            self.game_state_check(self.board) # check the state of the game
         self.ui.root.attributes('-disabled', False) # re-enabling the tkinter window after the computer has played its turn
 
     def minimax(self, board, depth:int = 0, isMaximizing:bool = True) -> float | int:
         """The main minimax algorithm"""
 
-        winner = self.game_state_check(minimaxing=True) # checking for the state of the game before running the whole algo.
+        winner = self.game_state_check(board, minimaxing=True) # checking for the state of the game before running the whole algo.
         if winner is not None: #  if the game has ended. ie there is a winner/tie.
             return winner # return the score of the scenerio.
         
@@ -268,27 +266,23 @@ class Game:
             
             return best_score # returning the best score.
 
-    def game_state_check(self, minimaxing:bool = False) -> int | None:
+    def game_state_check(self, board:dict, minimaxing:bool = False) -> int | None:
         """Responsible for checking the state of the board."""
-
-        self.update_board() # update the board.
 
         # checking for the winning scenerio
         for lines in self.winning_scenerio:
 
-            if self.board[lines[0]] == self.board[lines[1]] == self.board[lines[2]] and self.board[lines[0]] != " ":
+            if board[lines[0]] == board[lines[1]] == board[lines[2]] and board[lines[0]] != " ":
                 
                 if not minimaxing: # if not executed thru the minimax algorithm.
-                    thread = threading.Thread(target=self.game_over, args=[{self.board[lines[0]]}]) # start the game over thread.
+                    thread = threading.Thread(target=self.game_over, args=[{board[lines[0]]}]) # start the game over thread.
                     thread.start()
                     return 
                 
                 else:
-                    return self.scores[self.board[lines[0]]] # return the score of the scenerio.
+                    return self.scores[board[lines[0]]] # return the score of the scenerio.
 
-        if all(list(map(lambda x: x.strip(), self.board.values()))): # if the whole board is filled.
-
-            self.update_board() # updating the board
+        if all(list(map(lambda x: x.strip(), board.values()))): # if the whole board is filled.
 
             if not minimaxing:
                 thread = threading.Thread(target=self.game_over, args=["tie"]) # starting the game over thread.
