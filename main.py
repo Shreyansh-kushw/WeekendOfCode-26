@@ -207,7 +207,7 @@ class Game:
             return
         
         elif self.board[(1,1)] == "X" and list(self.board.values()).count(" ") == 8: # when the human plays at the center in his first move.
-            self.button_handler((0,0), self.button_position[(1,1)]) # play at any corner
+            self.button_handler((0,0), self.button_position[(0,0)]) # play at any corner
             self.ui.root.attributes('-disabled', False) # re-enabling the tkinter window after the computer has played its turn
             return
 
