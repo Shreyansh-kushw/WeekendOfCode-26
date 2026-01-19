@@ -2,7 +2,6 @@ from collections import deque
 from tkinter import *
 from pyautogui import alert
 import os
-import random
 import threading
 
 class GUI:
@@ -133,14 +132,15 @@ class GameState:
     def play(self, position:tuple[int]):
 
         if self.current_player == "X":
-            if len(self.Player_X_queue) < 3:
-                self.Player_X_queue.append(position)
+            self.Player_X_queue.append(position)
+            # if len(self.Player_X_queue) < 3:
+            #     self.Player_X_queue.append(position)
 
-            else:
-                removed = self.Player_X_queue.popleft()
-                self.board[removed] = " "
-                self.button_position[removed].config(state="active")
-                self.Player_X_queue.append(position)
+            # else:
+            #     removed = self.Player_X_queue.popleft()
+            #     self.board[removed] = " "
+            #     self.button_position[removed].config(state="active")
+            #     self.Player_X_queue.append(position)
             
             if self.board[position] == " ":
                 self.board[position] = self.current_player
@@ -152,14 +152,15 @@ class GameState:
             self.computer_turn()
             
         else:
-            if len(self.Player_O_queue) < 3:
-                self.Player_O_queue.append(position)
+            self.Player_O_queue.append(position)
+            # if len(self.Player_O_queue) < 3:
+            #     self.Player_O_queue.append(position)
 
-            else:
-                removed = self.Player_O_queue.popleft()
-                self.board[removed] = " "
-                self.button_position[removed].config(state="active")
-                self.Player_O_queue.append(position)
+            # else:
+            #     removed = self.Player_O_queue.popleft()
+            #     self.board[removed] = " "
+            #     self.button_position[removed].config(state="active")
+            #     self.Player_O_queue.append(position)
             
             if self.board[position] == " ":
                 self.board[position] = self.current_player
@@ -179,24 +180,23 @@ class GameState:
         
         return new_list
 
-    # def computer_turn(self):
-    #     possibilites = list(map(self.check_availability, [list(self.board.keys())]))[0]
-    #     computer_move = random.choice(possibilites)
-    #     print(4)
-    #     self.button_handler(computer_move, self.button_position[computer_move])
-
     def computer_turn(self):
 
         best_score = float("-inf")
 
         possibilites = list(map(self.check_availability, [list(self.board.keys())]))[0]
-        for positions in possibilites:
-            self.board[positions] = "O"
-            score = self.minimax(self.board, 0, False)
-            self.board[positions] = " "
-            best_score = max(best_score, score)
-            best_move = positions
-        self.button_handler(best_move, self.button_position[best_move])
+        if possibilites:
+            for positions in possibilites:
+                self.board[positions] = "O"
+                score = self.minimax(self.board, 0, False)
+                self.board[positions] = " "
+                if score > best_score:
+                    best_score = score
+                    best_move = positions
+            self.button_handler(best_move, self.button_position[best_move])
+        
+        else:
+            self.game_state_check()
 
     def minimax(self, board, depth:int = 1, isMaximizing:bool = True):
         
@@ -232,13 +232,12 @@ class GameState:
         self.update_board()
         for lines in self.winning_scenerio:
             if self.board[lines[0]] == self.board[lines[1]] == self.board[lines[2]] and self.board[lines[0]] != " ":
-                # print(2)
                 if not minimaxing:
                     thread = threading.Thread(target=self.game_over, args=[{self.board[lines[0]]}])
                     thread.start()
                     return 
-                
-                return self.scores[self.board[lines[0]]]
+                else:
+                    return self.scores[self.board[lines[0]]]
 
         if all(list(map(lambda x: x.strip(), self.board.values()))):
             self.update_board()
