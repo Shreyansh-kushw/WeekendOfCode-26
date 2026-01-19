@@ -1,12 +1,14 @@
-from collections import deque
-from tkinter import *
-from pyautogui import alert
 import os
 import threading
 
-class GUI:
+from tkinter import *
+from collections import deque
+from pyautogui import alert
+from copy import deepcopy
 
-    def __init__(self):
+class GUI:
+    """Class that handles the GUI"""
+    def __init__(self) -> None:
         
         self.root = Tk()
         self.root.title("Vanishing Tic-Tac-Toe")
@@ -54,9 +56,12 @@ class GUI:
         self.btn22.grid(column = 30, row = 20)
         
 
-class GameState:
+class Game:
+    """The main class that handles the GAME"""
+    def __init__(self) -> None:
+        self.ui = GUI() # creating an instance of the GUI class 
 
-    def __init__(self):
+        # winning scenerios
         self.winning_scenerio = [
             [(0,0),(0,1),(0,2)],
             [(1,0),(1,1),(1,2)],
@@ -68,6 +73,7 @@ class GameState:
             [(0,2),(1,1),(2,0)]
         ]
 
+        # the board
         self.board = {
             (0,0) : " ",
             (0,1) : " ",
@@ -79,8 +85,8 @@ class GameState:
             (2,1) : " ",
             (2,2) : " ",
         }
-        self.ui = GUI()
 
+        # dictionary relating the buttons to their respective positions
         self.button_position = {
             (0,0) : self.ui.btn00,
             (0,1) : self.ui.btn01,
@@ -92,26 +98,26 @@ class GameState:
             (2,1) : self.ui.btn21,
             (2,2) : self.ui.btn22,
         }
-
-        self.Player_X = "X"
-        self.Player_O = "O"
         
+        # updating the board        
         self.update_board()
         
+        # creating the queues for the turns taken by the players
         self.Player_X_queue = deque()
         self.Player_O_queue = deque()
 
-        self.plays = 0
-        self.current_player = "X" 
+        self.current_player = "X" # the player that goes first
 
+        # scores for different game ending scenerios for minimax algorithm
         self.scores = {
             "X" : -1,
             "O" : 1,
             "tie" : 0,
         }
 
-    def update_board(self):
-        # print("updating")
+    def update_board(self) -> None:
+        """Function responsible for updating the board"""
+
         self.ui.btn00.config(text=self.board[(0,0)], command= lambda: self.button_handler((0,0), self.button_position[(0,0)]))
         self.ui.btn01.config(text=self.board[(0,1)], command= lambda: self.button_handler((0,1), self.button_position[(0,1)]))
         self.ui.btn02.config(text=self.board[(0,2)], command= lambda: self.button_handler((0,2), self.button_position[(0,2)]))
@@ -122,16 +128,19 @@ class GameState:
         self.ui.btn21.config(text=self.board[(2,1)], command= lambda: self.button_handler((2,1), self.button_position[(2,1)]))
         self.ui.btn22.config(text=self.board[(2,2)], command= lambda: self.button_handler((2,2), self.button_position[(2,2)]))
     
-    def button_handler(self, position:tuple[int], button):
-        self.play(position)
-        button.config(state = "disabled")
-        self.update_board()
-        print(3)
-        self.game_state_check()
+    def button_handler(self, position:tuple[int], button:Button) -> None:
+        """Function responsible for handling the button presses"""
 
-    def play(self, position:tuple[int]):
+        self.play(position) # making the play
+        button.config(state = "disabled") # disabling the buttons that were pressed
+        self.update_board() # updating the boards
+        self.game_state_check() # checking whether the game has ended or not
 
-        if self.current_player == "X":
+    def play(self, position:tuple[int]) -> None:
+        """Function responsible for handling the plays made by the players."""
+
+        if self.current_player == "X": # if the Player_X has made the move
+
             self.Player_X_queue.append(position)
             # if len(self.Player_X_queue) < 3:
             #     self.Player_X_queue.append(position)
@@ -142,16 +151,18 @@ class GameState:
             #     self.button_position[removed].config(state="active")
             #     self.Player_X_queue.append(position)
             
-            if self.board[position] == " ":
+            if self.board[position] == " ": # modifying the board only when the place was empty
                 self.board[position] = self.current_player
+
             else:
                 pass
             
-            self.current_player = "O"
-            self.update_board()
-            self.computer_turn()
+            self.current_player = "O" # switching the current player
+            self.update_board() # updating the board
+            self.computer_turn() # initiating the computer's turn
             
-        else:
+        else: # if the Player_O has made the move
+
             self.Player_O_queue.append(position)
             # if len(self.Player_O_queue) < 3:
             #     self.Player_O_queue.append(position)
@@ -162,16 +173,20 @@ class GameState:
             #     self.button_position[removed].config(state="active")
             #     self.Player_O_queue.append(position)
             
-            if self.board[position] == " ":
-                self.board[position] = self.current_player
+            if self.board[position] == " ": # modifying the board only when the place is empty
+                self.board[position] = self.current_player 
+            
             else:
                 pass
             
-            self.current_player = "X"
-            self.update_board()
+            self.current_player = "X" # changing the current player
+            self.update_board() # updating the board
 
-    def check_availability(self, keys:list[tuple[int]]):
+    def check_availability(self, keys:list[tuple[int]]) -> list:
+        """Returns the list of all the unoccupied positions on the board."""
+
         new_list = []
+
         for key in keys:
             if self.board[key] != " ":
                 pass
@@ -180,88 +195,124 @@ class GameState:
         
         return new_list
 
-    def computer_turn(self):
+    def computer_turn(self) -> None:
+        """Responsible for handling the moves made by the computer."""
 
-        best_score = float("-inf")
+        self.ui.root.attributes('-disabled', True) # disabling the interactions with the tkinter window till the computer decides its move
 
-        possibilites = list(map(self.check_availability, [list(self.board.keys())]))[0]
-        if possibilites:
+        # hardcoding standard scenerios to improve the time.
+        if self.board[(1,1)] == " ": # When the human plays anywhere other than the center as his first move
+            self.button_handler((1,1), self.button_position[(1,1)]) # play at the center
+            self.ui.root.attributes('-disabled', False) # re-enabling the tkinter window after the computer has played its turn
+            return
+        
+        elif self.board[(1,1)] == "X" and list(self.board.values()).count(" ") == 8: # when the human plays at the center in his first move.
+            self.button_handler((0,0), self.button_position[(1,1)]) # play at any corner
+            self.ui.root.attributes('-disabled', False) # re-enabling the tkinter window after the computer has played its turn
+            return
+
+        # Minimax algorithm
+        best_score = float("-inf") # initial score for maximizing.
+
+        board = deepcopy(self.board) # creating the copy of self.board to prevent modifying the original one.
+
+        possibilites = list(map(self.check_availability, [list(self.board.keys())]))[0] # getting the possible unoccupied places.
+        
+        if possibilites: # if the board is still empty.
             for positions in possibilites:
+
                 self.board[positions] = "O"
+
                 score = self.minimax(self.board, 0, False)
                 self.board[positions] = " "
                 if score > best_score:
                     best_score = score
                     best_move = positions
-            self.button_handler(best_move, self.button_position[best_move])
-        
-        else:
-            self.game_state_check()
 
-    def minimax(self, board, depth:int = 1, isMaximizing:bool = True):
+            self.button_handler(best_move, self.button_position[best_move]) # executing the best move.
         
-        winner = self.game_state_check(minimaxing=True)
+        else: # if the board has no empty boxes.
+            self.game_state_check() # check the state of the game
+        self.ui.root.attributes('-disabled', False) # re-enabling the tkinter window after the computer has played its turn
 
-        if winner is not None:
-            return winner
+    def minimax(self, board, depth:int = 0, isMaximizing:bool = True) -> float | int:
+        """The main minimax algorithm"""
+
+        winner = self.game_state_check(minimaxing=True) # checking for the state of the game before running the whole algo.
+        if winner is not None: #  if the game has ended. ie there is a winner/tie.
+            return winner # return the score of the scenerio.
         
-        if isMaximizing:
-            best_score = float("-inf")
-            possibilites = list(map(self.check_availability, [list(self.board.keys())]))[0]
-            for positions in possibilites:
-                self.board[positions] = "O"
-                score = self.minimax(self.board, depth+1, False)
-                self.board[positions] = " "
+        if isMaximizing: # if we are supposed to maximize.
+            best_score = float("-inf") # initial score for maximizing.
+            possibilites = list(map(self.check_availability, [list(board.keys())]))[0] # getting the available spots.
+
+            # maximizing algorithm
+            for positions in possibilites: 
+                board[positions] = "O"
+                score = self.minimax(board, depth+1, False)
+                board[positions] = " "
                 best_score = max(best_score, score)
             
-            return best_score
+            return best_score # returning the best possible score calculated based on the given scenerio of the board. 
         
-        else:
-            best_score = float("inf")
-            possibilites = list(map(self.check_availability, [list(self.board.keys())]))[0]
+        else: # if we are supposed to minimize.
+
+            best_score = float("inf") # initial score for minimizing.
+
+            possibilites = list(map(self.check_availability, [list(board.keys())]))[0]
             for positions in possibilites:
-                self.board[positions] = "X"
-                score = self.minimax(self.board, depth+1, True)
-                self.board[positions] = " "
+                board[positions] = "X"
+                score = self.minimax(board, depth+1, True)
+                board[positions] = " "
                 best_score = min(best_score, score)
             
-            return best_score
+            return best_score # returning the best score.
 
-    def game_state_check(self, minimaxing:bool = False):
+    def game_state_check(self, minimaxing:bool = False) -> int | None:
+        """Responsible for checking the state of the board."""
 
-        self.update_board()
+        self.update_board() # update the board.
+
+        # checking for the winning scenerio
         for lines in self.winning_scenerio:
+
             if self.board[lines[0]] == self.board[lines[1]] == self.board[lines[2]] and self.board[lines[0]] != " ":
-                if not minimaxing:
-                    thread = threading.Thread(target=self.game_over, args=[{self.board[lines[0]]}])
+                
+                if not minimaxing: # if not executed thru the minimax algorithm.
+                    thread = threading.Thread(target=self.game_over, args=[{self.board[lines[0]]}]) # start the game over thread.
                     thread.start()
                     return 
+                
                 else:
-                    return self.scores[self.board[lines[0]]]
+                    return self.scores[self.board[lines[0]]] # return the score of the scenerio.
 
-        if all(list(map(lambda x: x.strip(), self.board.values()))):
-            self.update_board()
+        if all(list(map(lambda x: x.strip(), self.board.values()))): # if the whole board is filled.
+
+            self.update_board() # updating the board
+
             if not minimaxing:
-                thread = threading.Thread(target=self.game_over, args=["tie"])
+                thread = threading.Thread(target=self.game_over, args=["tie"]) # starting the game over thread.
                 thread.start()
                 return
             
-            return 0
+            return 0 # score for the tie scenerio
         
         return None
 
     def game_over(self, winner:str):
-        self.ui.root.attributes('-disabled', True)
-        # self.update_board()
-        if not winner == "tie":
-            print(1)
+        """Function handling the generation of the dialog box upon game over."""
+
+        self.ui.root.attributes('-disabled', True) # disabling the tkinter window. 
+
+        if not winner == "tie": # if the game is not a tie.
             alert(text=f"Game Over! {winner} wins!", title="Game Over", button="OK")
         
-        else:
+        else: # if the game is tied.
             alert(text="Game Over! Match Tied!", title="Game Over", button="OK")
         
         os._exit(0)
 
-tester = GameState()
+if __name__ == "__main__":
 
-tester.ui.root.mainloop()
+    tester = Game()
+    tester.ui.root.mainloop() # running the game.
