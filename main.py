@@ -3,6 +3,7 @@ from tkinter import *
 from pyautogui import alert
 import os
 import random
+import threading
 
 class GUI:
 
@@ -104,6 +105,12 @@ class GameState:
         self.plays = 0
         self.current_player = "X" 
 
+        self.scores = {
+            "X" : -1,
+            "O" : 1,
+            "tie" : 0,
+        }
+
     def update_board(self):
         # print("updating")
         self.ui.btn00.config(text=self.board[(0,0)], command= lambda: self.button_handler((0,0), self.button_position[(0,0)]))
@@ -120,6 +127,7 @@ class GameState:
         self.play(position)
         button.config(state = "disabled")
         self.update_board()
+        print(3)
         self.game_state_check()
 
     def play(self, position:tuple[int]):
@@ -163,9 +171,7 @@ class GameState:
 
     def check_availability(self, keys:list[tuple[int]]):
         new_list = []
-        # print("keys-",keys)
         for key in keys:
-            # print(key)
             if self.board[key] != " ":
                 pass
             else:
@@ -173,30 +179,83 @@ class GameState:
         
         return new_list
 
+    # def computer_turn(self):
+    #     possibilites = list(map(self.check_availability, [list(self.board.keys())]))[0]
+    #     computer_move = random.choice(possibilites)
+    #     print(4)
+    #     self.button_handler(computer_move, self.button_position[computer_move])
+
     def computer_turn(self):
-        # print(list(self.board.keys()))
+
+        best_score = float("-inf")
+
         possibilites = list(map(self.check_availability, [list(self.board.keys())]))[0]
-        computer_move = random.choice(possibilites)
-        # print(computer_move)
+        for positions in possibilites:
+            self.board[positions] = "O"
+            score = self.minimax(self.board, 0, False)
+            self.board[positions] = " "
+            best_score = max(best_score, score)
+            best_move = positions
+        self.button_handler(best_move, self.button_position[best_move])
+
+    def minimax(self, board, depth:int = 1, isMaximizing:bool = True):
+        
+        winner = self.game_state_check(minimaxing=True)
+
+        if winner is not None:
+            return winner
+        
+        if isMaximizing:
+            best_score = float("-inf")
+            possibilites = list(map(self.check_availability, [list(self.board.keys())]))[0]
+            for positions in possibilites:
+                self.board[positions] = "O"
+                score = self.minimax(self.board, depth+1, False)
+                self.board[positions] = " "
+                best_score = max(best_score, score)
+            
+            return best_score
+        
+        else:
+            best_score = float("inf")
+            possibilites = list(map(self.check_availability, [list(self.board.keys())]))[0]
+            for positions in possibilites:
+                self.board[positions] = "X"
+                score = self.minimax(self.board, depth+1, True)
+                self.board[positions] = " "
+                best_score = min(best_score, score)
+            
+            return best_score
+
+    def game_state_check(self, minimaxing:bool = False):
+
         self.update_board()
-        self.button_handler(computer_move, self.button_position[computer_move])
-
-    def game_state_check(self):
-
         for lines in self.winning_scenerio:
             if self.board[lines[0]] == self.board[lines[1]] == self.board[lines[2]] and self.board[lines[0]] != " ":
-                self.game_over(f"{self.board[lines[0]]}")
-                return
-            else:
-                pass
+                # print(2)
+                if not minimaxing:
+                    thread = threading.Thread(target=self.game_over, args=[{self.board[lines[0]]}])
+                    thread.start()
+                    return 
+                
+                return self.scores[self.board[lines[0]]]
 
         if all(list(map(lambda x: x.strip(), self.board.values()))):
             self.update_board()
-            self.game_over("tie")
+            if not minimaxing:
+                thread = threading.Thread(target=self.game_over, args=["tie"])
+                thread.start()
+                return
+            
+            return 0
+        
+        return None
 
     def game_over(self, winner:str):
-        self.update_board()
+        self.ui.root.attributes('-disabled', True)
+        # self.update_board()
         if not winner == "tie":
+            print(1)
             alert(text=f"Game Over! {winner} wins!", title="Game Over", button="OK")
         
         else:
