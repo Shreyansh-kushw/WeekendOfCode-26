@@ -39,14 +39,33 @@ def display_text(text):
 def isWinner(board , le):
     return (board[1][0]==board[2][0]==board[3][0]==le) or (board[4][0]==board[5][0]==board[6][0]==le) or (board[7][0]==board[8][0]==board[9][0]==le) or (board[1][0]==board[4][0]==board[7][0]==le) or (board[2][0]==board[5][0]==board[8][0]==le) or (board[3][0]==board[6][0]==board[9][0]==le) or (board[1][0]==board[5][0]==board[9][0]==le)  or (board[3][0]==board[5][0]==board[7][0]==le)
 
-def minimax(board , history , x_queue , o_queue , depth , isMaximizing):
+def scenario_checker(board):
+    winning_pos = [[1 , 2 , 3] , [4 , 5 , 6] , [7 , 8 , 9] , [1 , 4 , 7] , [2 , 5 , 8] , [3 , 6 , 9] , [1 , 5 , 9] , [3 , 5 , 7]]
+    score = 0 
+    for line in winning_pos :
+        ai_count = sum((board[pos] == 'O') for pos in line)
+        opp_count = sum((board[pos] == 'X') for pos in line)
+
+        if ai_count > 0 and opp_count == 0 :
+            score += 10**ai_count
+        elif ai_count == 0 and opp_count > 0 :
+            score -= 10**opp_count
+        
+    if board[5] == 'O' :
+        score += 5
+    elif board[5] == 'X':
+        score -= 5
+    
+    return score 
+
+def minimax(board , history , x_queue , o_queue , depth , isMaximizing , alpha = -math.inf , beta = math.inf):
     score = None
     if depth == 10 :
-        return 0 
+        return scenario_checker(board) 
     if isWinner(board , 'X'):
-        score = -1 
+        score = -1000
     elif isWinner(board , 'O'):
-        score = 1
+        score = 1000
     elif isDraw(history , (x_queue + o_queue)):
         print("yes")
         score = 0
@@ -58,8 +77,6 @@ def minimax(board , history , x_queue , o_queue , depth , isMaximizing):
         bestScore = -math.inf 
         vanishing_pos = None 
         for i in range(1 , len(board)):
-            if bestScore == 1 :
-                break 
             if board[i] == ' ':
                 if len(o_queue) == 3 :
                     board[o_queue[0]] = ' '
@@ -67,7 +84,7 @@ def minimax(board , history , x_queue , o_queue , depth , isMaximizing):
                 board[i] = 'O' 
                 o_queue.append(i)
 
-                score = minimax(board , history , x_queue , o_queue , depth + 1, False)
+                score = minimax(board , history , x_queue , o_queue , depth + 1, False , alpha , beta )
 
                 board[i] = ' '
                 if vanishing_pos : 
@@ -77,6 +94,10 @@ def minimax(board , history , x_queue , o_queue , depth , isMaximizing):
 
                 board[i] = ' '
                 bestScore = max(bestScore, score)
+                alpha = max(alpha , bestScore)
+
+                if beta <= alpha :
+                    break 
     
     else :
         bestScore = math.inf 
@@ -91,7 +112,7 @@ def minimax(board , history , x_queue , o_queue , depth , isMaximizing):
                 board[i] = 'X' 
                 x_queue.append(i)     
 
-                score = minimax(board , history , x_queue , o_queue , depth + 1, True)
+                score = minimax(board , history , x_queue , o_queue , depth + 1, True , alpha , beta )
 
                 board[i] = ' '
                 if vanishing_pos : 
@@ -99,7 +120,10 @@ def minimax(board , history , x_queue , o_queue , depth , isMaximizing):
                     board[vanishing_pos] = 'X'
                 x_queue.pop()
 
-                bestScore = min(bestScore, score)      
+                bestScore = min(bestScore, score) 
+                beta = min(beta , bestScore)
+                if beta <= alpha :
+                    break      
         
     return bestScore
 
