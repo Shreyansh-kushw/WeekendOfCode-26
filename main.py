@@ -110,8 +110,8 @@ class Game:
 
         # scores for different game ending scenerios for minimax algorithm
         self.scores = {
-            "X" : -1,
-            "O" : 1,
+            "X" : -1000,
+            "O" : 1000,
             "tie" : 0,
         }
 
@@ -131,62 +131,114 @@ class Game:
     def button_handler(self, position:tuple[int], button:Button) -> None:
         """Function responsible for handling the button presses"""
 
-        self.play(position) # making the play
+        self.play(self.board, self.Player_X_queue, self.Player_O_queue, position) # making the play
         button.config(state = "disabled") # disabling the buttons that were pressed
         self.update_board() # updating the boards
         self.game_state_check(self.board) # checking whether the game has ended or not
 
-    def play(self, position:tuple[int]) -> None:
+    def play(self, board:dict, Player_X_queue:deque, Player_O_queue:deque, position:tuple[int], simulating:bool = False, current_player:str | None = None) -> dict:
         """Function responsible for handling the plays made by the players."""
 
-        if self.current_player == "X": # if the Player_X has made the move
+        if not current_player:
+            if self.current_player == "X": # if the Player_X has made the move
 
-            self.Player_X_queue.append(position)
-            # if len(self.Player_X_queue) < 3:
-            #     self.Player_X_queue.append(position)
+                # Player_X_queue.append(position)
+                if len(Player_X_queue) < 3:
+                    Player_X_queue.append(position)
 
-            # else:
-            #     removed = self.Player_X_queue.popleft()
-            #     self.board[removed] = " "
-            #     self.button_position[removed].config(state="active")
-            #     self.Player_X_queue.append(position)
-            
-            if self.board[position] == " ": # modifying the board only when the place was empty
-                self.board[position] = self.current_player
+                else:
+                    removed = Player_X_queue.popleft()
+                    board[removed] = " "
+                    if not simulating:
+                        self.button_position[removed].config(state="active")
+                    Player_X_queue.append(position)
+                
+                if board[position] == " ": # modifying the board only when the place was empty
+                    board[position] = self.current_player
 
-            else:
-                pass
-            
-            self.current_player = "O" # switching the current player
-            self.computer_turn() # initiating the computer's turn
-            
-        else: # if the Player_O has made the move
+                else:
+                    pass
+                
+                if not simulating:
+                    self.current_player = "O" # switching the current player
+                    self.computer_turn() # initiating the computer's turn
+                # return board, Player_X_queue, Player_O_queue
+            else: # if the Player_O has made the move
 
-            self.Player_O_queue.append(position)
-            # if len(self.Player_O_queue) < 3:
-            #     self.Player_O_queue.append(position)
+                # Player_O_queue.append(position)
+                if len(Player_O_queue) < 3:
+                    Player_O_queue.append(position)
 
-            # else:
-            #     removed = self.Player_O_queue.popleft()
-            #     self.board[removed] = " "
-            #     self.button_position[removed].config(state="active")
-            #     self.Player_O_queue.append(position)
-            
-            if self.board[position] == " ": # modifying the board only when the place is empty
-                self.board[position] = self.current_player 
-            
-            else:
-                pass
-            
-            self.current_player = "X" # changing the current player
+                else:
+                    removed = Player_O_queue.popleft()
+                    board[removed] = " "
+                    if not simulating:
+                        self.button_position[removed].config(state="active")
+                    Player_O_queue.append(position)
+                
+                if board[position] == " ": # modifying the board only when the place is empty
+                    board[position] = self.current_player 
+                
+                else:
+                    pass
+                
+                if not simulating:
+                    self.current_player = "X" # changing the current player
+            return board, Player_X_queue, Player_O_queue
+        else:
+            if current_player == "X": # if the Player_X has made the move
 
-    def check_availability(self, keys:list[tuple[int]]) -> list:
+                # Player_X_queue.append(position)
+                if len(Player_X_queue) < 3:
+                    Player_X_queue.append(position)
+
+                else:
+                    removed = Player_X_queue.popleft()
+                    board[removed] = " "
+                    if not simulating:
+                        self.button_position[removed].config(state="active")
+                    Player_X_queue.append(position)
+                
+                if board[position] == " ": # modifying the board only when the place was empty
+                    board[position] = current_player
+
+                else:
+                    pass
+                
+                if not simulating:
+                    current_player = "O" # switching the current player
+                    self.computer_turn() # initiating the computer's turn
+                # return board, Player_X_queue, Player_O_queue
+            else: # if the Player_O has made the move
+
+                # Player_O_queue.append(position)
+                if len(Player_O_queue) < 3:
+                    Player_O_queue.append(position)
+
+                else:
+                    removed = Player_O_queue.popleft()
+                    board[removed] = " "
+                    if not simulating:
+                        self.button_position[removed].config(state="active")
+                    Player_O_queue.append(position)
+                
+                if board[position] == " ": # modifying the board only when the place is empty
+                    board[position] = current_player 
+                
+                else:
+                    pass
+                
+                if not simulating:
+                    current_player = "X" # changing the current player
+            return board, Player_X_queue, Player_O_queue
+
+    def check_availability(self, board, keys:list[tuple[int]]) -> list:
         """Returns the list of all the unoccupied positions on the board."""
 
         new_list = []
 
         for key in keys:
-            if self.board[key] != " ":
+            if board[key] != " ":
                 pass
             else:
                 new_list.append(key)  
@@ -212,17 +264,16 @@ class Game:
         # Minimax algorithm
         best_score = float("-inf") # initial score for maximizing.
 
-        board = deepcopy(self.board) # creating the copy of self.board to prevent modifying the original one.
-
-        possibilites = list(map(self.check_availability, [list(self.board.keys())]))[0] # getting the possible unoccupied places.
+        possibilites = list(map(self.check_availability, [self.board], [list(self.board.keys())]))[0] # getting the possible unoccupied places.
         
         if possibilites: # if the board is still empty.
             for positions in possibilites:
+                board = deepcopy(self.board) # creating the copy of self.board to prevent modifying the original one.
+                Player_X_queue = deepcopy(self.Player_X_queue)
+                Player_O_queue = deepcopy(self.Player_O_queue)
 
-                self.board[positions] = "O"
-
-                score = self.minimax(self.board, 0, False)
-                self.board[positions] = " "
+                board_recursed, Player_X_queue, Player_O_queue = self.play(board, Player_X_queue, Player_O_queue, positions, simulating=True)
+                score = self.minimax(board_recursed, Player_X_queue, Player_O_queue, 0, False)
                 if score > best_score:
                     best_score = score
                     best_move = positions
@@ -230,41 +281,70 @@ class Game:
             self.button_handler(best_move, self.button_position[best_move]) # executing the best move.
         
         else: # if the board has no empty boxes.
-            self.game_state_check(self.board) # check the state of the game
+            self.game_state_check(board) # check the state of the game
         self.ui.root.attributes('-disabled', False) # re-enabling the tkinter window after the computer has played its turn
 
-    def minimax(self, board, depth:int = 0, isMaximizing:bool = True) -> float | int:
+    def minimax(self, board, Player_X_queue, Player_O_queue, depth:int = 0, isMaximizing:bool = True) -> float | int:
         """The main minimax algorithm"""
 
         winner = self.game_state_check(board, minimaxing=True) # checking for the state of the game before running the whole algo.
         if winner is not None: #  if the game has ended. ie there is a winner/tie.
             return winner # return the score of the scenerio.
+        if depth > 5:
+            best_score = self.scenerio_checker(board)
+            return best_score
         
-        if isMaximizing: # if we are supposed to maximize.
-            best_score = float("-inf") # initial score for maximizing.
-            possibilites = list(map(self.check_availability, [list(board.keys())]))[0] # getting the available spots.
+        else:
+            if isMaximizing: # if we are supposed to maximize.
+                best_score = float("-inf") # initial score for maximizing.
+                possibilites = list(map(self.check_availability,  [board], [list(board.keys())]))[0] # getting the available spots.
 
-            # maximizing algorithm
-            for positions in possibilites: 
-                board[positions] = "O"
-                score = self.minimax(board, depth+1, False)
-                board[positions] = " "
-                best_score = max(best_score, score)
+                # maximizing algorithm
+                for positions in possibilites: 
+                    new_board = deepcopy(board)
+                    new_xq = deepcopy(Player_X_queue)
+                    new_oq = deepcopy(Player_O_queue)
+
+                    board_recursed, new_xq, new_oq = (self.play(new_board, new_xq, new_oq, positions, simulating=True, current_player= "O"))
+                    score = self.minimax(board_recursed, new_xq, new_oq, depth+1, False)
+                    # board[positions] = " "``
+                    best_score = max(best_score, score)
+                
+                return best_score # returning the best possible score calculated based on the given scenerio of the board. 
             
-            return best_score # returning the best possible score calculated based on the given scenerio of the board. 
-        
-        else: # if we are supposed to minimize.
+            else: # if we are supposed to minimize.
 
-            best_score = float("inf") # initial score for minimizing.
+                best_score = float("inf") # initial score for minimizing.
+                possibilites = list(map(self.check_availability,  [board], [list(board.keys())]))[0]
+                for positions in possibilites:
+                    new_board = deepcopy(board)
+                    new_xq = deepcopy(Player_X_queue)
+                    new_oq = deepcopy(Player_O_queue)
 
-            possibilites = list(map(self.check_availability, [list(board.keys())]))[0]
-            for positions in possibilites:
-                board[positions] = "X"
-                score = self.minimax(board, depth+1, True)
-                board[positions] = " "
-                best_score = min(best_score, score)
-            
-            return best_score # returning the best score.
+                    board_recursed, new_xq, new_oq = (self.play(new_board, new_xq, new_oq, positions, simulating=True, current_player="X"))
+                    score = self.minimax(board_recursed, new_xq, new_oq, depth+1, True)
+                    best_score = min(best_score, score)
+                
+                return best_score # returning the best score.
+
+    def scenerio_checker(self, board):
+        score = 0
+        print("checking scenerio")
+        for line in self.winning_scenerio:
+            ai_count = sum(board[posn] == "O" for posn in line)
+            opp_count = sum(board[posn] == "X" for posn in line)
+
+            if ai_count > 0 and opp_count == 0:
+                score += 10 ** ai_count
+            elif opp_count > 0 and ai_count == 0:
+                score -= 10 ** opp_count
+
+        if board[(1,1)] == "O":
+            score += 5
+        elif board[(1,1)] == "X":
+            score -= 5
+
+        return score
 
     def game_state_check(self, board:dict, minimaxing:bool = False) -> int | None:
         """Responsible for checking the state of the board."""
