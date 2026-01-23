@@ -332,8 +332,8 @@ class Game:
         if not minimaxing:
             snapshot = self.board_snapshot(self.Player_X_queue, self.Player_O_queue)
             self.history.append(snapshot)
-
-            if self.history.count(snapshot) > 3:
+            count = self.history.count(snapshot)
+            if count > 4:
                 thread = threading.Thread(target=self.game_over, args=["tie"]) # starting the game over thread.
                 thread.start()
                 return
