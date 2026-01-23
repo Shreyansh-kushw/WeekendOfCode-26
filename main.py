@@ -290,7 +290,7 @@ class Game:
         winner = self.game_state_check(board, minimaxing=True) # checking for the state of the game before running the whole algo.
         if winner is not None: #  if the game has ended. ie there is a winner/tie.
             return winner # return the score of the scenerio.
-        if depth > 10:
+        if depth > 5:
             best_score = self.scenerio_checker(board)
             return best_score
         
@@ -335,7 +335,6 @@ class Game:
 
     def scenerio_checker(self, board):
         score = 0
-        print("checking scenerio")
         for line in self.winning_scenerio:
             ai_count = sum(board[posn] == "O" for posn in line)
             opp_count = sum(board[posn] == "X" for posn in line)
