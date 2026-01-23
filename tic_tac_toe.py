@@ -40,6 +40,8 @@ def isWinner(board , le):
     return (board[1][0]==board[2][0]==board[3][0]==le) or (board[4][0]==board[5][0]==board[6][0]==le) or (board[7][0]==board[8][0]==board[9][0]==le) or (board[1][0]==board[4][0]==board[7][0]==le) or (board[2][0]==board[5][0]==board[8][0]==le) or (board[3][0]==board[6][0]==board[9][0]==le) or (board[1][0]==board[5][0]==board[9][0]==le)  or (board[3][0]==board[5][0]==board[7][0]==le)
 
 def scenario_checker(board):
+    #handling the scores for different winning scenarios
+
     winning_pos = [[1 , 2 , 3] , [4 , 5 , 6] , [7 , 8 , 9] , [1 , 4 , 7] , [2 , 5 , 8] , [3 , 6 , 9] , [1 , 5 , 9] , [3 , 5 , 7]]
     score = 0 
     for line in winning_pos :
@@ -60,7 +62,7 @@ def scenario_checker(board):
 
 def minimax(board , history , x_queue , o_queue , depth , isMaximizing , alpha = -math.inf , beta = math.inf):
     score = None
-    if depth == 10 :
+    if depth == 10 :     #to avoid infinite recursion
         return scenario_checker(board) 
     if isWinner(board , 'X'):
         score = -1000
@@ -78,6 +80,7 @@ def minimax(board , history , x_queue , o_queue , depth , isMaximizing , alpha =
         vanishing_pos = None 
         for i in range(1 , len(board)):
             if board[i] == ' ':
+                #recursion part 
                 if len(o_queue) == 3 :
                     board[o_queue[0]] = ' '
                     vanishing_pos = o_queue.pop(0)
@@ -86,6 +89,7 @@ def minimax(board , history , x_queue , o_queue , depth , isMaximizing , alpha =
 
                 score = minimax(board , history , x_queue , o_queue , depth + 1, False , alpha , beta )
 
+                #bactracking part 
                 board[i] = ' '
                 if vanishing_pos : 
                     o_queue.insert(0 , vanishing_pos)
@@ -96,7 +100,7 @@ def minimax(board , history , x_queue , o_queue , depth , isMaximizing , alpha =
                 bestScore = max(bestScore, score)
                 alpha = max(alpha , bestScore)
 
-                if beta <= alpha :
+                if beta <= alpha :      # pruning branches
                     break 
     
     else :
@@ -122,7 +126,7 @@ def minimax(board , history , x_queue , o_queue , depth , isMaximizing , alpha =
 
                 bestScore = min(bestScore, score) 
                 beta = min(beta , bestScore)
-                if beta <= alpha :
+                if beta <= alpha :              #pruning branches
                     break      
         
     return bestScore
@@ -143,7 +147,7 @@ def compMove(board , history , x_queue , o_queue):
 
             board[i] = ' '
             if vanishing_pos :
-                o_queue.insert(0 , vanishing_pos)
+                o_queue.insert(0 , vanishing_pos)       
                 board[vanishing_pos] = 'O'
             o_queue.pop()
 
@@ -154,6 +158,7 @@ def compMove(board , history , x_queue , o_queue):
     return move 
 
 def isDraw(history , track):
+    # checking for drawing condition
     return (history.count(track) == 3)
 
 def main():
@@ -180,7 +185,7 @@ def main():
 
                 if board[pos] == ' ' :
                     if len(x_queue) == 3:
-                        board[x_queue[0]] = ' '
+                        board[x_queue[0]] = ' '             #keeping track of vanishing OX
                         x_queue.pop(0)
                     board[pos] = 'X' 
                     x_queue.append(pos) 
@@ -200,7 +205,7 @@ def main():
                         pass 
                     else:
                         if len(o_queue) == 3 :
-                            board[o_queue[0]] = ' '
+                            board[o_queue[0]] = ' '             #keeping track of vanishing O 
                             o_queue.pop(0)
                         board[move] = 'O' 
                         o_queue.append(move)
