@@ -284,13 +284,13 @@ class Game:
             self.game_state_check(board) # check the state of the game
         self.ui.root.attributes('-disabled', False) # re-enabling the tkinter window after the computer has played its turn
 
-    def minimax(self, board, Player_X_queue, Player_O_queue, depth:int = 0, isMaximizing:bool = True) -> float | int:
+    def minimax(self, board, Player_X_queue, Player_O_queue, depth:int = 0, isMaximizing:bool = True, alpha:float = -float("inf"), beta:float = float("inf")) -> float | int:
         """The main minimax algorithm"""
 
         winner = self.game_state_check(board, minimaxing=True) # checking for the state of the game before running the whole algo.
         if winner is not None: #  if the game has ended. ie there is a winner/tie.
             return winner # return the score of the scenerio.
-        if depth > 5:
+        if depth > 10:
             best_score = self.scenerio_checker(board)
             return best_score
         
@@ -306,9 +306,12 @@ class Game:
                     new_oq = deepcopy(Player_O_queue)
 
                     board_recursed, new_xq, new_oq = (self.play(new_board, new_xq, new_oq, positions, simulating=True, current_player= "O"))
-                    score = self.minimax(board_recursed, new_xq, new_oq, depth+1, False)
+                    score = self.minimax(board_recursed, new_xq, new_oq, depth+1, False, alpha, beta)
                     # board[positions] = " "``
                     best_score = max(best_score, score)
+                    alpha = max(alpha, best_score)
+                    if beta <= alpha:
+                        break 
                 
                 return best_score # returning the best possible score calculated based on the given scenerio of the board. 
             
@@ -322,8 +325,11 @@ class Game:
                     new_oq = deepcopy(Player_O_queue)
 
                     board_recursed, new_xq, new_oq = (self.play(new_board, new_xq, new_oq, positions, simulating=True, current_player="X"))
-                    score = self.minimax(board_recursed, new_xq, new_oq, depth+1, True)
+                    score = self.minimax(board_recursed, new_xq, new_oq, depth+1, True, alpha, beta)
                     best_score = min(best_score, score)
+                    beta = min(beta, best_score)
+                    if beta <= alpha:
+                        break  # prune branch
                 
                 return best_score # returning the best score.
 
