@@ -55,10 +55,8 @@ and strategic reasoning.
 
 <pre>
 vanishing_ttt/
-├── main.py        # Entry point, wires all components together
+├── main.py        # Entry point, wires all components together and also holds the main game logic.
 ├── gui.py         # Tkinter-based graphical user interface
-├── game_state.py  # Core game rules and state management
-├── ai.py          # Minimax AI with alpha–beta pruning
 ├── README.md
 └── Algorithm.md   # Algorithm logic explaination
 
@@ -68,26 +66,15 @@ vanishing_ttt/
 
 <h2>⚙️ Core Components</h2>
 
-<h3>1️⃣ Game State Management (<code>game_state.py</code>)</h3>
+<h3>1️⃣ Game State Management (<code>main.py</code>)</h3>
 
 <ul>
     <li>Board representation</li>
     <li>Tracking the order of X and O pieces using queues</li>
     <li>Enforcing the 3-piece limit and vanishing rule</li>
     <li>Detecting win conditions</li>
-    <li>Handling draw conditions, including threefold repetition</li>
-    <li>Creating immutable snapshots of game states for simulation</li>
-</ul>
-
-<p>This module is completely independent of both the GUI and the AI.</p>
-
-<h3>2️⃣ AI Engine (<code>ai.py</code>)</h3>
-
-<ul>
     <li>Minimax search with Alpha–Beta pruning</li>
     <li>Depth-limited search for performance</li>
-    <li>Heuristic evaluation of non-terminal states</li>
-    <li>Neutral handling of repetition-based draws</li>
 </ul>
 
 <h3>3️⃣ Graphical User Interface (<code>gui.py</code>)</h3>
